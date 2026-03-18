@@ -1,0 +1,222 @@
+# 🤖 Nerdin Auto Apply Bot
+
+Automação em Python para candidatura automática em vagas PJ no site da Nerdin.
+
+---
+
+## 🚀 O que este bot faz
+
+Este script automatiza o processo de candidatura em vagas da Nerdin, incluindo:
+
+* 🔍 Busca automática de vagas (Java PJ)
+* 🔗 Coleta de links de vagas
+* 🖱️ Clique inteligente em botões
+* 📝 Preenchimento automático de formulários
+* 🔄 Navegação entre etapas do processo seletivo
+* 🚀 Envio automático da candidatura
+
+---
+
+## ⚙️ Tecnologias utilizadas
+
+* Python 3
+* Selenium
+* WebDriver Manager
+
+---
+
+## 📦 Instalação
+
+### 1. Instale as dependências
+
+```bash
+pip install selenium webdriver-manager
+```
+
+---
+
+## ▶️ Como usar
+
+```bash
+python automacao_nerdin.py
+```
+
+---
+
+## ⚠️ IMPORTANTE — Primeira execução
+
+Na primeira vez que o bot rodar:
+
+👉 **Você precisa fazer login manualmente no site da Nerdin**
+
+Isso acontece porque o bot utiliza:
+
+```python
+--user-data-dir=C:\chrome-bot
+```
+
+Ou seja:
+
+* Ele salva sua sessão no Chrome
+* Após o primeiro login, não será necessário logar novamente
+
+---
+
+## 🧠 Como o bot funciona
+
+### 1. Acessa a página de vagas
+
+```python
+https://www.nerdin.com.br/vagas.php?busca=java&filtro_pj=1
+```
+
+### 2. Coleta os links das vagas
+
+* Busca todos os `<a>` que contenham `"vaga"`
+
+### 3. Entra em cada vaga
+
+* Acessa individualmente cada link
+
+### 4. Clica em "Candidatar"
+
+* Usa método seguro (`clicar_seguro`) para evitar erros
+
+### 5. Preenche o formulário automaticamente
+
+Campos preenchidos:
+
+| Campo              | Valor                                                           |
+| ------------------ | --------------------------------------------------------------- |
+| Nome               | Gustavo Campos                                                  |
+| Email              | [gustavo@gmail.com](mailto:gustavo@gmail.com) |
+| Telefone           | 11969999999                                                     |
+| Cidade             | São Paulo - SP                                                  |
+| Função             | Desenvolvedor Java                                              |
+| Pretensão Salarial | 15000                                                           |
+| Disponibilidade    | 0                                                               |
+| Outros             | Sim                                                             |
+
+---
+
+### 6. Avança etapas automaticamente
+
+O bot:
+
+* Detecta botão **"Próximo"**
+* Detecta botão **"Enviar candidatura"**
+* Navega até finalizar o processo
+
+---
+
+## 🛠️ Estrutura do código
+
+### 🔹 `esperar()`
+
+Simula comportamento humano com delay aleatório
+
+---
+
+### 🔹 `clicar_seguro()`
+
+Evita erros como:
+
+* `element click intercepted`
+* elementos fora da tela
+
+---
+
+### 🔹 `pegar_links_vagas()`
+
+Coleta e remove duplicação de links
+
+---
+
+### 🔹 `preencher_formulario()`
+
+Responsável por:
+
+* Identificar tipo de campo
+* Preencher automaticamente com base no nome/placeholder
+
+---
+
+### 🔹 `processar_formulario()`
+
+Loop que:
+
+* Preenche etapas
+* Clica em "próximo"
+* Finaliza candidatura
+
+---
+
+### 🔹 `executar()`
+
+Fluxo principal:
+
+1. Abre lista de vagas
+2. Itera sobre cada vaga
+3. Aplica automaticamente
+
+---
+
+## ⚠️ Possíveis problemas
+
+### ❌ Campo não preenchido corretamente
+
+Alguns campos usam máscara (ex: salário)
+
+👉 Pode ser necessário ajustar para digitação simulada
+
+---
+
+### ❌ Botão não clicável
+
+Já tratado com:
+
+* Scroll automático
+* Fallback via JavaScript
+
+---
+
+### ❌ Loop infinito ou erro em etapas
+
+Limitado por:
+
+```python
+tentativas < 10
+```
+
+---
+
+## 🔒 Observações importantes
+
+* Use com responsabilidade
+* O site pode detectar automação
+* Evite aplicar em muitas vagas rapidamente
+
+---
+
+## 🚀 Melhorias futuras
+
+* 🤖 Integração com IA (respostas inteligentes)
+* 💰 Tratamento avançado de máscara de salário
+* 📄 Upload automático de currículo
+* 📊 Log de candidaturas
+* 🔁 Execução contínua
+* 🌐 Multi-sites (Gupy, LinkedIn, etc)
+
+---
+
+## 👨‍💻 Autor
+
+Gustavo Pinheiro
+
+---
+
+## ⭐ Dica final
+
+Se quiser transformar esse bot em algo nível produção (com IA e alta escala):
+
+👉 peça: **"melhorar esse bot"**
