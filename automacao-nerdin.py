@@ -6,14 +6,65 @@ from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
 import time
 import random
+import os
+import json
+
+# ===== PATHS =====
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+ARQUIVO_APLICADAS = os.path.join(BASE_DIR, "vagas_aplicadas.txt")
+CONFIG_FILE = os.path.join(BASE_DIR, "config.json")
+
+# ===== PALAVRAS PADRÃO =====
+PALAVRAS_CHAVE = [
+  "angular", "",  "pleno", "senior", "desenvolvedor", "aws", "cloud" , ".net"
+]
 
 # ===== CONFIG =====
-URL = "https://www.nerdin.com.br/vagas.php?busca=java&filtro_pj=1"
+def carregar_config():
+    try:
+        with open(CONFIG_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except:
+        return {}
+
+config = carregar_config()
+
+cidade = config.get("cidade", "São Paulo - SP")
+modalidade = config.get("modalidade", "pj")
+vaga = config.get("vaga", random.choice(config.get("skills", PALAVRAS_CHAVE)))
+salario = config.get("salario", "15000")
+skills = config.get("skills", "")
+nome_usuario = config.get("nome", "Seu Nome")
+email_usuario = config.get("email", "email@email.com")
+telefone_usuario = config.get("telefone", "11999999999")
+
+# ===== GERAR URL =====
+def gerar_url():
+    print(f"🔎 Buscando por: {vaga}")
+    return f"https://www.nerdin.com.br/vagas.php?busca={random.choice(config.get("vaga", PALAVRAS_CHAVE))}"
+
+# ===== VAGAS APLICADAS =====
+def carregar_vagas_aplicadas():
+    try:
+        with open(ARQUIVO_APLICADAS, "r") as f:
+            return set(linha.strip() for linha in f.readlines())
+    except FileNotFoundError:
+        return set()
+
+def salvar_vaga_aplicada(link):
+    vagas = carregar_vagas_aplicadas()
+    if link in vagas:
+        return
+
+    with open(ARQUIVO_APLICADAS, "a") as f:
+        f.write(link + "\n")
+    print(f"💾 Salvo: {link}")
 
 # ===== DRIVER =====
 options = webdriver.ChromeOptions()
-options.add_argument(r"--user-data-dir=C:\chrome-bot")
 options.add_argument("--start-maximized")
+# ⚠️ Se der erro, comente a linha abaixo
+options.add_argument(r"--user-data-dir=C:\chrome-bot")
 
 driver = webdriver.Chrome(
     service=Service(ChromeDriverManager().install()),
@@ -32,7 +83,6 @@ def clicar_seguro(elemento):
 
         WebDriverWait(driver, 5).until(EC.element_to_be_clickable(elemento))
         elemento.click()
-
     except:
         driver.execute_script("arguments[0].click();", elemento)
 
@@ -63,14 +113,14 @@ def preencher_formulario():
         try:
             if not el.is_displayed() or not el.is_enabled():
                 continue
+
             nome = (el.get_attribute("name") or "").lower()
             placeholder = (el.get_attribute("placeholder") or "").lower()
-            tag = el.tag_name.lower()
-            nome = (el.get_attribute("name") or "").lower()
             aria = (el.get_attribute("aria-label") or "").lower()
+            tag = el.tag_name.lower()
 
             texto = f"{nome} {placeholder} {aria}"
-            
+
             if tag in ["input", "textarea"]:
                 if el.get_attribute("value"):
                     continue
@@ -78,26 +128,29 @@ def preencher_formulario():
                 el.click()
                 esperar()
 
-                if "nome" in nome:
-                    el.send_keys("Gustavo Pinheiro Campos")
+                if "nome" in texto:
+                    el.send_keys(nome_usuario)
 
-                elif "email" in nome:
-                    el.send_keys("gustavocampos170@gmail.com")
+                elif "email" in texto:
+                    el.send_keys(email_usuario)
 
-                elif "telefone" in nome:
-                    el.send_keys("11963061380")
+                elif "telefone" in texto or "celular" in texto:
+                    el.send_keys(telefone_usuario)
 
-                elif "cidade" in nome:
-                    el.send_keys("São Paulo - SP")
+                elif "cidade" in texto:
+                    el.send_keys(cidade)
 
-                elif "funcao" in nome:
-                    el.send_keys("Desenvolvedor Java")
+                elif "funcao" in texto or "vaga" in texto:
+                    el.send_keys(vaga)
 
                 elif "salario" in texto or "pretensao" in texto:
                     el.clear()
-                    el.send_keys("15000")
+                    el.send_keys(str(salario))
 
-                elif "disponibilidade" in nome:
+                elif "habilidade" in texto or "skill" in texto:
+                    el.send_keys(skills)
+
+                elif "disponibilidade" in texto:
                     el.send_keys("0")
 
                 else:
@@ -112,7 +165,7 @@ def preencher_formulario():
         except Exception as e:
             print("Erro campo:", e)
 
-# ===== PROCESSAR ETAPAS =====
+# ===== PROCESSAR =====
 def processar_formulario():
     tentativas = 0
 
@@ -153,25 +206,33 @@ def aplicar_vaga():
 
         if not botao:
             print("❌ Sem botão de candidatura")
-            return
+            return False
 
         clicar_seguro(botao)
         esperar()
 
-        processar_formulario()
+        return processar_formulario()
 
     except Exception as e:
         print("Erro aplicar:", e)
+        return False
 
 # ===== LOOP =====
 def executar():
-    driver.get(URL)
+    url = gerar_url()
+    driver.get(url)
     esperar()
 
+    vagas_aplicadas = carregar_vagas_aplicadas()
     links = pegar_links_vagas()
+
     print(f"{len(links)} vagas encontradas")
 
     for i, link in enumerate(links):
+        if link in vagas_aplicadas:
+            print(f"⏭️ Já aplicada: {link}")
+            continue
+
         try:
             print(f"\n🚀 Vaga {i+1}")
             print(link)
@@ -179,14 +240,17 @@ def executar():
             driver.get(link)
             esperar()
 
-            aplicar_vaga()
+            sucesso = aplicar_vaga()
 
-            driver.get(URL)
+            if sucesso:
+                salvar_vaga_aplicada(link)
+
+            driver.get(url)
             esperar()
 
         except Exception as e:
             print("Erro:", e)
-            driver.get(URL)
+            driver.get(url)
             esperar()
 
 # ===== START =====
